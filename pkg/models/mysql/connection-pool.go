@@ -1,12 +1,12 @@
 package mysql
 
 import (
+	// "database/sql"
 	"database/sql"
-	"../models/models"
-	"github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
 )
 
-func openDB(dsn string) (*sql.DB, error) {
+func OpenDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dsn)
 
 	if err != nil {

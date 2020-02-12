@@ -2,18 +2,26 @@ package main
 
 import (
 	"net/http"
-	
+	"mkucharsky/wpapi/pkg/models/mysql"
+
 	//"database/sql"
 )
 
 type application struct {
-	num int
+	urls *mysql.URLObjectModel
+	responses *mysql.URLResponseModel
 }
 
 func main() {
 
+	var dsn string
+
+	db, _ := mysql.OpenDB(dsn)
+
+
 	app := application{
-		num: 5,
+		urls: &mysql.URLObjectModel{DB: db}, 
+		responses: &mysql.URLResponseModel{DB: db},
 	}
 
 	server := &http.Server {
