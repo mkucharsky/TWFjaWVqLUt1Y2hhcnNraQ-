@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi"
+	"mkucharsky/wpapi/pkg/models"
 	"net/http"
+	"net/url"
 	"strconv"
+
+	"github.com/go-chi/chi"
 )
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -13,22 +16,40 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) addURL(w http.ResponseWriter, r *http.Request) {
 
-	_ = r.ParseForm()
+	err := r.ParseForm()
 
-	// if err != nil {
-	// 	app.clientError(w, http.StatusBadRequest)
-	// 	return
-	// }
+	if err != nil {
+
+		http.Error(w, "Niepoprawny json", 400)
+		app.errorLog.Println(err)
+		return
+	}
 	form := r.PostForm
 
-	url := form.Get("url")
+	u := form.Get("url")
+
+	_, err = url.ParseRequestURI(u)
+
+	if err != nil {
+		http.Error(w, "Niepoprawny json", 400)
+		app.errorLog.Println(err)
+		return
+	}
+
 	interval, err := strconv.Atoi(form.Get("interval"))
 
 	var id int64
 	if err != nil {
+		http.Error(w, "Niepoprawny json", 400)
+		app.errorLog.Println(err)
+		return
+	}
 
-	} else {
-		id, _ = app.urls.Insert(url, int64(interval))
+	id, err = app.urls.Insert(u, int64(interval))
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
 	}
 
 	json.NewEncoder(w).Encode(map[string]int64{"id": id})
@@ -40,23 +61,35 @@ func (app *application) deleteURL(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	err := app.urls.Delete(int64(id))
 
-	if err != nil {
-		// co się dzieje gdy nie ma takiego id w bazie danych
-	} else {
-		json.NewEncoder(w).Encode(map[string]int64{"id": int64(id)})
+	switch err {
+	case nil:
+		break
+	case models.ErrNoRecord:
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		app.errorLog.Println(err)
+		return
+	default:
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		app.errorLog.Println(err)
+		return
 	}
+
+	json.NewEncoder(w).Encode(map[string]int64{"id": int64(id)})
+
 }
 
 func (app *application) listURLS(w http.ResponseWriter, r *http.Request) {
 
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	results, err := app.urls.Get(int64(id))
+	results, err := app.urls.Get()
 
 	if err != nil {
-		// co się dzieje gdy error
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		app.errorLog.Println(err)
 	} else {
 		json.NewEncoder(w).Encode(results)
 	}
+
+	json.NewEncoder(w).Encode(results)
 }
 
 func (app *application) showHistoryURL(w http.ResponseWriter, r *http.Request) {
