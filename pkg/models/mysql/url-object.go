@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	"errors"
 	"mkucharsky/wpapi/pkg/models"
 )
 
@@ -28,28 +27,32 @@ func (m *URLObjectModel) Insert(url string, interval int64) (int64, error) {
 
 }
 
-func (m *URLObjectModel) Delete(id int64) error {
+func (m *URLObjectModel) Delete(id int64) (int64, error) {
 	stmt := `DELETE FROM urls WHERE id = ?`
-	row := m.DB.QueryRow(stmt, &id)
-
-	u := models.URLObject{}
-
-	err := row.Scan(&u.ID, &u.URL, &u.Interval)
+	result, err := m.DB.Exec(stmt, &id)
 
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return models.ErrNoRecord
-		} else {
-			return models.ErrAnother
-		}
-
+		return 0, err
 	}
-	return nil
+
+	aff, err := result.RowsAffected()
+
+	if err != nil {
+		return 0, err
+	}
+
+	if aff == 0 {
+		return 0, models.ErrNoRecord
+	} else if aff > 1 {
+		return 0, models.ErrAnother
+	}
+
+	return result.LastInsertId()
 }
 
 func (m *URLObjectModel) Get() ([]*models.URLObject, error) {
 
-	stmt := `SELECT * FROM urls`
+	stmt := `SELECT * FROM urls ORDER BY id`
 	rows, err := m.DB.Query(stmt)
 	defer rows.Close()
 
@@ -71,5 +74,28 @@ func (m *URLObjectModel) Get() ([]*models.URLObject, error) {
 		data = append(data, record)
 	}
 
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
 	return data, nil
+}
+
+func (m *URLObjectModel) IfExists(id int64) (bool, error) {
+	var amount int64
+	err := m.DB.QueryRow(`SELECT count(id) AS amount from urls where id = ?`, id).Scan(&amount)
+
+	if err != nil {
+		return false, err
+	}
+
+	switch amount {
+	case 0:
+		return false, models.ErrNoRecord
+	case 1:
+		return true, nil
+	default:
+		return false, models.ErrAnother
+	}
 }

@@ -1,13 +1,13 @@
 package models
 
 import (
-	"time"
 	"errors"
+	"time"
 )
 
 var (
 	ErrNoRecord = errors.New("models: no matching record found")
-	ErrAnother  = errors.New("models: operation faild")
+	ErrAnother  = errors.New("models: operation for object faild")
 )
 
 type URLObject struct {
@@ -17,7 +17,9 @@ type URLObject struct {
 }
 
 type URLResponse struct {
-	Response string    `json:"response"`
-	Duration float64   `json:"duration"`
-	Created  time.Time `json:"created_at"`
+	ID          int64     `json:"id"`
+	IDUrlObject int64     `json:"id-urlobject"`
+	Response    string    `json:"response"`
+	Duration    float64   `json:"duration"`
+	Created     time.Time `json:"created-at"`
 }
