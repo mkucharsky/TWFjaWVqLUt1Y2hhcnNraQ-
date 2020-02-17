@@ -9,8 +9,9 @@ type URLObjectModel struct {
 	DB *sql.DB
 }
 
+
 func (m *URLObjectModel) Insert(url string, interval int64) (int64, error) {
-	stmt := `INSERT INTO urls (url, interval) VALUES(?,?)`
+	stmt := `INSERT INTO urls (url, pause) VALUES(?,?)`
 	result, err := m.DB.Exec(stmt, &url, &interval)
 
 	if err != nil {
@@ -84,7 +85,7 @@ func (m *URLObjectModel) Get() ([]*models.URLObject, error) {
 
 func (m *URLObjectModel) IfExists(id int64) (bool, error) {
 	var amount int64
-	err := m.DB.QueryRow(`SELECT count(id) AS amount from urls where id = ?`, id).Scan(&amount)
+	err := m.DB.QueryRow(`SELECT count(id) AS amount FROM urls WHERE id = ?`, id).Scan(&amount)
 
 	if err != nil {
 		return false, err

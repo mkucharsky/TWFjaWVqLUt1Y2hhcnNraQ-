@@ -19,7 +19,7 @@ type URLObject struct {
 type URLResponse struct {
 	ID          int64     `json:"id"`
 	IDUrlObject int64     `json:"id-urlobject"`
-	Response    string    `json:"response"`
+	Response    *string    `json:"response"`
 	Duration    float64   `json:"duration"`
 	Created     time.Time `json:"created-at"`
 }

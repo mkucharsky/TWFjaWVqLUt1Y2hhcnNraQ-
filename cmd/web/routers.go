@@ -7,6 +7,7 @@ import (
 func (app *application) routes() *chi.Mux {
 
 	r := chi.NewRouter()
+	// r.Get("/", app.home)
 	r.Post("/api/fetcher", app.addURL)
 	r.Delete("/api/fetcher/{id}", app.deleteURL)
 	r.Get("/api/fetcher", app.listURLS)
