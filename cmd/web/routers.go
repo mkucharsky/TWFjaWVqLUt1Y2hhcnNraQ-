@@ -13,5 +13,5 @@ func (app *application) routes() http.Handler {
 	r.Get("/api/fetcher", app.listURLS)
 	r.Get("/api/fetcher/{id}/history", app.showHistoryURL)
 
-	return r
+	return app.headers(r)
 }

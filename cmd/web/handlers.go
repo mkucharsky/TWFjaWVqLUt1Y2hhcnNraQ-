@@ -88,7 +88,7 @@ func (app *application) createURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(inserted)
-
+	
 }
 
 func (app *application) deleteURL(w http.ResponseWriter, r *http.Request) {

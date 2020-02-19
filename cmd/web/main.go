@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 	"log"
 	"mkucharsky/wpapi/pkg/models/mysql"
 	"mkucharsky/wpapi/pkg/workers"
@@ -22,26 +22,25 @@ func main() {
 	infoLog := log.New(os.Stdout, "INFO\t", log.LstdFlags)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Lshortfile|log.Lshortfile)
 
-	// if err := godotenv.Load("./../.env"); err != nil {
-	// 	errorLog.Fatal(err)
-	// }
+	if err := godotenv.Load("./../.env"); err != nil {
+		errorLog.Fatal(err)
+	}
 
-	// dbPort := os.Getenv("MYSQL_PORT")
-	// dbUser := os.Getenv("MYSQL_USER")
-	// dbPass := os.Getenv("MYSQL_PASS")
-	// dbName := os.Getenv("MYSQL_DB")
-	// dbContainerName := os.Getenv("MYSQL_CONTAINER_NAME")
+	dbPort := os.Getenv("MYSQL_PORT")
+	dbUser := os.Getenv("MYSQL_USER")
+	dbPass := os.Getenv("MYSQL_PASS")
+	dbName := os.Getenv("MYSQL_DB")
+	dbContainerName := os.Getenv("MYSQL_CONTAINER_NAME")
 
 	infoLog.Println("Connecting to database...")
 
-	// var dsn string = dbUser + ":" + dbPass + "@tcp(:" + dbPort + ")/" + dbName + "?parseTime=true"
-	dsn := "root:XmOBudtu@tcp(localhost:3306)/test?parseTime=true"
-	// dsn := "user1:pass@tcp(wpmysql:3306)/wp?parseTime=true"
-	infoLog.Println(dsn)
+	var dsn string = dbUser + ":" + dbPass + "@tcp("+ dbContainerName +":" + dbPort + ")/" + dbName + "?parseTime=true"
+
 	db, err := mysql.OpenDB(dsn)
 
 	if err != nil {
-		errorLog.Println(err)
+		errorLog.Println(dsn)
+		errorLog.Fatal(err)
 	}
 	infoLog.Println("Database connected")
 
@@ -59,7 +58,7 @@ func main() {
 
 	infoLog.Println("Starting server...")
 	server := &http.Server{
-		Addr:    "localhost:8081",
+		Addr:    ":8080",
 		Handler: app.routes(),
 	}
 
