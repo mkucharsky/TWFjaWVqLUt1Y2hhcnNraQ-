@@ -11,13 +11,16 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func (app *application) addURL(w http.ResponseWriter, r *http.Request) {
+func (app *application) createURL(w http.ResponseWriter, r *http.Request) {
 
-	r.Body = http.MaxBytesReader(w, r.Body, 1024)
-	err := r.ParseForm()
+	r.Body = http.MaxBytesReader(w, r.Body, 2<<20)
+
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		app.errorLog.Println(err)
 		return
 	}
 
@@ -25,7 +28,13 @@ func (app *application) addURL(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 
-		http.Error(w, "Niepoprawny json", http.StatusBadRequest)
+		if err.Error() == "http: request body too large" {
+
+			app.errorLog.Println(err)
+			return
+		}
+		http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		app.errorLog.Println(err)
 		return
 	}
@@ -60,21 +69,38 @@ func (app *application) addURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := app.urls.Insert(u, int64(interval))
+	inserted := &models.URLObject{}
+	inserted, err = app.urls.Insert(int64(id), u, int64(interval))
 
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		app.errorLog.Println(err)
 		return
 	}
 
-	app.worker.NewJob(id, int64(interval)).Run(app.getDataFromURL, int64(id), u)
-	json.NewEncoder(w).Encode(map[string]int64{"id": id})
+	job := app.worker.FindJob(inserted.ID)
+
+	if job == nil {
+		app.worker.NewJob(inserted.ID, int64(inserted.Interval)).Run(app.getDataFromURL, int64(inserted.ID), inserted.URL)
+
+	} else {
+		job.UpdateInterval(inserted.Interval)
+	}
+
+	json.NewEncoder(w).Encode(inserted)
 
 }
 
 func (app *application) deleteURL(w http.ResponseWriter, r *http.Request) {
 
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		app.errorLog.Println(err)
+		return
+	}
+
 	result, err := app.urls.Delete(int64(id))
 
 	switch err {

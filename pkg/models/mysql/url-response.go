@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	// "mkucharsky/wpapi/pkg/models"
 	"time"
 )
 
@@ -27,7 +26,7 @@ func (m *URLResponseModel) Get(id int64) (interface{}, error) {
 	stmt := `SELECT response, duration, created_at FROM responses WHERE id_url = ? ORDER BY created_at DESC`
 
 	type ResponseView struct {
-		Response   string
+		Response   *string
 		Duration   float64
 		Created_At time.Time
 	}
