@@ -30,10 +30,10 @@ func (app *application) createURL(w http.ResponseWriter, r *http.Request) {
 
 		if err.Error() == "http: request body too large" {
 
+			http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
 			app.errorLog.Println(err)
 			return
 		}
-		http.Error(w, http.StatusText(http.StatusRequestEntityTooLarge), http.StatusRequestEntityTooLarge)
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		app.errorLog.Println(err)
 		return
